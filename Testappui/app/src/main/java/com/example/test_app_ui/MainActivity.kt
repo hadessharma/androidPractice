@@ -27,6 +27,7 @@ import com.example.test_app_ui.ui.theme.TestappuiTheme
 
 import android.Manifest
 import android.content.Context
+import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -37,6 +38,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -62,10 +64,12 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+
+                    Column(modifier = Modifier) {
                         Greeting(
                             name = "Android", modifier = Modifier
                         )
+                        CameraPreviewView(this@MainActivity)
                         HomeButtons()
                     }
                 }
@@ -74,21 +78,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun HomeButtons() {
     val context = LocalContext.current
 
-    // Manage permission request
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            if (granted) {
-                Log.d("Permission", "Camera permission granted")
-            } else {
-                Log.d("Permission", "Camera permission denied")
-            }
-        }
-    )
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -100,26 +94,23 @@ fun HomeButtons() {
         ) {
             Button(
                 onClick = {
-                    // Request permission if not already granted
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    // Open camera with flash
-                    openCameraWithFlash(context)
+                    // Request CAMERA and RECORD_AUDIO permissions
                 },
                 modifier = Modifier
-                    .padding(8.dp) // Padding around each button
-                    .weight(1f), // Distribute space evenly
+                    .padding(8.dp)
+                    .weight(1f),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
+                    containerColor = Color.Green,
                     contentColor = Color.White
                 )
             ) {
-                Text("Heart")
+                Text("Record Video")
             }
 
             Button(
                 onClick = {
-                    // Handle button click
+                    // Handle other button click
                 },
                 modifier = Modifier
                     .padding(8.dp)
@@ -136,38 +127,6 @@ fun HomeButtons() {
     }
 }
 
-fun openCameraWithFlash(context: Context) {
-    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-
-    cameraProviderFuture.addListener({
-        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-        val preview = CameraXPreview.Builder().build()
-        val previewView = PreviewView(context)
-
-        // Set up the preview view
-        preview.setSurfaceProvider(previewView.surfaceProvider)
-
-        // Select back camera
-        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-        try {
-            // Bind camera lifecycle
-            val camera: Camera = cameraProvider.bindToLifecycle(
-                context as androidx.lifecycle.LifecycleOwner,
-                cameraSelector,
-                preview
-            )
-
-            // Turn on the flash
-            val cameraControl: CameraControl = camera.cameraControl
-            cameraControl.enableTorch(true) // Flash on
-
-        } catch (e: Exception) {
-            Log.e("CameraX", "Failed to bind camera use cases", e)
-        }
-
-    }, ContextCompat.getMainExecutor(context))
-}
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

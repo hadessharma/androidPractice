@@ -67,13 +67,14 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.camera.extensions) // Optional for extra features like portrait, night mode, etc.
 
-    dependencies {
-        implementation(libs.camera.core)
-        implementation(libs.camera.camera2)
-        implementation(libs.camera.lifecycle)
-        implementation(libs.camera.view)
-        implementation(libs.camera.extensions) // Optional for extra features like portrait, night mode, etc.
-    }
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.camerax.video)
 
+    // Coroutines
+    implementation(libs.coroutines)
 }
