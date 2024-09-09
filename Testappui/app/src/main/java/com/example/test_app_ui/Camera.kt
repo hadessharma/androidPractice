@@ -2,7 +2,11 @@ package com.example.test_app_ui
 
 import android.content.Context
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +17,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.google.common.util.concurrent.ListenableFuture
+
+val qualitySelector = QualitySelector.fromOrderedList(
+    listOf(Quality.UHD, Quality.FHD, Quality.HD, Quality.SD),
+    FallbackStrategy.lowerQualityOrHigherThan(Quality.SD))
+
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
+    override fun onCreate(savedInstanceState: Bundle?) {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+    }
+}
+
 
 @Composable
 fun CameraPreviewView(context: Context) {
