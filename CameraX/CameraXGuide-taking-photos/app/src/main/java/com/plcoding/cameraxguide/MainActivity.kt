@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -222,12 +224,14 @@ class MainActivity : ComponentActivity() {
         if (!hasRequiredPermissions()) {
             return
         }
+
         controller.cameraControl?.enableTorch(true)
         val outputFile = File(filesDir, "my-recording.mp4")
+
         recording = controller.startRecording(
             FileOutputOptions.Builder(outputFile).build(),
             AudioConfig.AUDIO_DISABLED,
-            ContextCompat.getMainExecutor(applicationContext),
+            ContextCompat.getMainExecutor(applicationContext)
         ) { event ->
             when (event) {
                 is VideoRecordEvent.Finalize -> {
@@ -238,7 +242,7 @@ class MainActivity : ComponentActivity() {
 
                         Toast.makeText(
                             applicationContext,
-                            "Video capture failed",
+                            "Video capture failed: ${event.error}",
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
@@ -251,7 +255,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Stop the recording after 45 seconds
+        Handler(Looper.getMainLooper()).postDelayed({
+            recording?.stop()
+            recording = null
+            controller.cameraControl?.enableTorch(false) // Turn off the torch after stopping
+        }, 10000)
     }
+
 
     private fun hasRequiredPermissions(): Boolean {
         return CAMERAX_PERMISSIONS.all {
