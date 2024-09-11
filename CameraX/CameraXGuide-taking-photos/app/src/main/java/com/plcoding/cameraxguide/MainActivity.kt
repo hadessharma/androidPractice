@@ -7,13 +7,17 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture.OnImageCapturedCallback
 import androidx.camera.core.ImageCaptureException
@@ -55,6 +59,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.plcoding.cameraxguide.ui.theme.CameraXGuideTheme
 import kotlinx.coroutines.launch
@@ -66,6 +71,7 @@ class MainActivity : ComponentActivity() {
     private var recording: Recording? = null
 
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasRequiredPermissions()) {
@@ -212,6 +218,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("MissingPermission")
     private fun recordVideo(controller: LifecycleCameraController) {
         if (recording != null) {
@@ -251,17 +258,65 @@ class MainActivity : ComponentActivity() {
                             "Video capture succeeded",
                             Toast.LENGTH_LONG
                         ).show()
+
+                        // checking if URI is valid
+                        Log.d("HeartRate", "URI: ${Uri.fromFile(outputFile)}")
+
+                        val path = Uri.fromFile(outputFile).path // Extract path from URI
+//                        if (path != null) {
+//                            val file = File(path)
+//                            if (file.exists()) {
+//                                Log.d("HeartRate", "File exists: $path")
+//                            } else {
+//                                Log.e("HeartRate", "File does not exist: $path")
+//                            }
+//                        } else {
+//                            Log.e("HeartRate", "Path extraction failed from URI")
+//                        }
+
+                        // Query the URI to get the file path
+//                        try {
+//                            val cursor = contentResolver.query(
+//                                Uri.fromFile(outputFile),
+//                                arrayOf(MediaStore.Images.Media.DATA),
+//                                null,
+//                                null,
+//                                null
+//                            )
+//                            if (cursor != null && cursor.moveToFirst()) {
+//                                val columnIndex =
+//                                    cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+//                                val path = cursor.getString(columnIndex)
+//                                cursor.close()
+//                                Log.d("HeartRate", "File path: $path")
+//                            } else {
+//                                Log.d("HeartRate", "Failed to query URI or no data found")
+//                            }
+//                        } catch (e: Exception) {
+//                            Log.e("HeartRate", "Error querying URI: ${e.message}")
+//                        }
+
+                        // Call heartRateCalculator after video capture succeeds
+                    lifecycleScope.launch {
+                        try {
+                            val rate = heartRateCalculator(Uri.fromFile(outputFile), contentResolver)
+                            // Use the result (rate) here
+                            Log.d("HeartRate", "Calculated heart rate: $rate")
+                        } catch (e: Exception) {
+                            Log.e("HeartRate", "Error calculating heart rate", e)
+                        }
+                    }
                     }
                 }
             }
         }
 
-        // Stop the recording after 45 seconds
+        // Stop the recording after 10 seconds (adjust as needed)
         Handler(Looper.getMainLooper()).postDelayed({
             recording?.stop()
             recording = null
             controller.cameraControl?.enableTorch(false) // Turn off the torch after stopping
-        }, 10000)
+        }, 45000)
     }
 
 
