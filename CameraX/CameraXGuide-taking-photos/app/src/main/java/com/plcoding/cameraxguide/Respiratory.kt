@@ -1,31 +1,40 @@
-package com.plcoding.cameraxguide
+import kotlin.math.abs
+import kotlin.math.pow
 
+public fun respiratoryRateCalculator(
+    accelValuesX: MutableList<Float>,
+    accelValuesY: MutableList<Float>,
+    accelValuesZ: MutableList<Float>
+): Int {
+    var previousValue = 0f // Better to initialize to 0 instead of 10f
+    var currentValue: Float
+    var k = 0
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-
-class Respiratory {
-
-    @Composable
-    fun OrientationDataCollectionScreen(onStartButtonClick: () -> Unit) {
-        // Simple UI with a button to start data collection
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(onClick = { onStartButtonClick() }) {
-                Text("Start Orientation Data Collection")
-            }
-        }
+    if (accelValuesY.size > 11) {
+        // Initialize previousValue with the first meaningful value
+        previousValue = kotlin.math.sqrt(
+            accelValuesZ[10].toDouble().pow(2.0) +
+                    accelValuesX[10].toDouble().pow(2.0) +
+                    accelValuesY[10].toDouble().pow(2.0)
+        ).toFloat()
     }
+
+    // Loop through the list starting at index 11
+    for (i in 11 until accelValuesY.size) {
+        currentValue = kotlin.math.sqrt(
+            accelValuesZ[i].toDouble().pow(2.0) +
+                    accelValuesX[i].toDouble().pow(2.0) +
+                    accelValuesY[i].toDouble().pow(2.0)
+        ).toFloat()
+
+        if (abs(previousValue - currentValue) > 0.15) {
+            k++
+        }
+        previousValue = currentValue
+    }
+
+    // Assuming data is collected over 45 seconds, compute the respiratory rate
+    val rate = (k.toDouble() / 45.0) * 30
+    return rate.toInt()
 }
+

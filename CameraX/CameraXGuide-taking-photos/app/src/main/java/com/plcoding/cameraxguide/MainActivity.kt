@@ -4,9 +4,11 @@ package com.plcoding.cameraxguide
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
@@ -34,9 +36,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.collectAsState
@@ -54,14 +56,22 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.plcoding.cameraxguide.ui.theme.CameraXGuideTheme
 import kotlinx.coroutines.launch
+import respiratoryRateCalculator
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), SensorEventListener {
 
     private var recording: Recording? = null
     private lateinit var sensorManager: SensorManager
     private var rotationVectorSensor: Sensor? = null
-    private val orientationValues = mutableListOf<FloatArray>()
+//    private val orientationValues = mutableListOf<FloatArray>()
+
+    private val azimuthValues = mutableListOf<Float>()
+    private val pitchValues = mutableListOf<Float>()
+    private val rollValues = mutableListOf<Float>()
+
     private val TAG = "OrientationData"
     private var isCollectingData by mutableStateOf(false)
 
@@ -94,82 +104,74 @@ class MainActivity : ComponentActivity() {
                 val viewModel = viewModel<MainViewModel>()
                 val bitmaps by viewModel.bitmaps.collectAsState()
 
-                BottomSheetScaffold(
-                    scaffoldState = scaffoldState,
-                    sheetPeekHeight = 0.dp,
-                    sheetContent = {
-                        PhotoBottomSheetContent(
-                            bitmaps = bitmaps, modifier = Modifier.fillMaxWidth()
-                        )
-                    }) { padding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                    ) {
-                        CameraPreview(
-                            controller = controller,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter) // Align at the top center
-                                .padding(16.dp) // Padding around the preview
-                                .size(200.dp) // Set a fixed size for the preview
 
-                        )
-                        Column(
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp) // Adjusted padding for the entire box
+                ) {
+                    CameraPreview(
+                        controller = controller,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter) // Align at the top center
+                            .padding(top = 20.dp) // Reduced top padding around the preview
+                            .size(240.dp) // Increased size for better visibility
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp) // Adjusted bottom padding
+                    ) {
+                        // Symptoms and Upload Signs Buttons
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.BottomCenter)
-                                .padding(16.dp)
+                                .padding(bottom = 20.dp), // Adjusted padding between rows
+                            horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
                         ) {
-                            // Symptoms and Upload Signs Buttons
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 5.dp),
-                                horizontalArrangement = Arrangement.SpaceAround
+                            Button(
+                                onClick = {},
+                                modifier = Modifier.width(160.dp),
+                                contentPadding = PaddingValues(12.dp) // Increased padding for better touch area
                             ) {
-                                Button(
-                                    onClick = {},
-                                    modifier = Modifier.width(150.dp),
-                                    contentPadding = PaddingValues(8.dp)
-                                ) {
-                                    Text("Upload Signs")
-                                }
+                                Text("Upload Signs")
                             }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 40.dp),
-                                horizontalArrangement = Arrangement.SpaceAround
+                            Button(
+                                onClick = {},
+                                modifier = Modifier.width(160.dp),
+                                contentPadding = PaddingValues(12.dp)
                             ) {
-                                Button(
-                                    onClick = {},
-                                    modifier = Modifier.width(150.dp),
-                                    contentPadding = PaddingValues(8.dp)
-                                ) {
-                                    Text("Symptoms")
-                                }
-                            }
-                            // Heart Rate and Respiration Buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceAround
-                            ) {
-                                Button(onClick = {
-                                    recordVideo(controller)
-                                }) {
-                                    Text("Heart Rate")
-                                }
-                                Button(onClick = {}) {
-                                    Text("Respiration")
-                                }
+                                Text("Symptoms")
                             }
                         }
-
+                        // Heart Rate and Respiration Buttons
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Button(
+                                onClick = { recordVideo(controller) },
+                                modifier = Modifier
+                                    .weight(1f) // Flexible size
+                                    .padding(end = 8.dp) // Spacing between buttons
+                            ) {
+                                Text("Heart Rate")
+                            }
+                            Button(
+                                onClick = { startOrientationDataCollection() },
+                                modifier = Modifier
+                                    .weight(1f) // Flexible size
+                                    .padding(start = 8.dp)
+                            ) {
+                                Text("Respiration")
+                            }
+                        }
                     }
                 }
 
-                startOrientationDataCollection()
             }
         }
     }
@@ -237,25 +239,8 @@ class MainActivity : ComponentActivity() {
         }, 45000)
     }
 
-    // Starts collecting orientation data
-    private fun startOrientationDataCollection() {
-        if (!isCollectingData) {
-            rotationVectorSensor?.let { sensor ->
-                sensorManager.registerListener(
-                    this, sensor, SensorManager.SENSOR_DELAY_UI
-                )
-            }
-            isCollectingData = true
-
-            // Stop collecting data after 45 seconds
-            Handler(Looper.getMainLooper()).postDelayed({
-                stopCollectingData()
-            }, 45000)
-        }
-    }
-
-    // This method is called when sensor data changes
-    fun onSensorChanged(event: SensorEvent?) {
+    // Implementing onSensorChanged() from SensorEventListener
+    override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             if (it.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
                 val rotationMatrix = FloatArray(9)
@@ -264,36 +249,95 @@ class MainActivity : ComponentActivity() {
                 val orientation = FloatArray(3)
                 SensorManager.getOrientation(rotationMatrix, orientation)
 
+                // Convert radians to degrees for orientation
                 val azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat() // Z axis
                 val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat()   // X axis
                 val roll = Math.toDegrees(orientation[2].toDouble()).toFloat()    // Y axis
 
-                // Log the data
-                Log.d(TAG, "Orientation: Z: $azimuth, X: $pitch, Y: $roll")
+                // FOR REAL RESPIRATION
+                // Log the data and store it
+                Log.d(TAG, "Orientation: Z (Azimuth): $azimuth, X (Pitch): $pitch, Y (Roll): $roll")
 
-                // Add values to the list
-                orientationValues.add(floatArrayOf(azimuth, pitch, roll))
+                // Add the values to the list
+                azimuthValues.add(azimuth)
+                pitchValues.add(pitch)
+                rollValues.add(roll)
             }
         }
     }
 
-    // This method is called after 45 seconds to stop data collection
+    // Implementing onAccuracyChanged() from SensorEventListener
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        // Handle accuracy changes if needed
+    }
+
+    // Function to start collecting data
+    private fun startOrientationDataCollection() {
+        if (!isCollectingData) {
+            rotationVectorSensor?.let { sensor ->
+                sensorManager.registerListener(
+                    this,
+                    sensor,
+                    SensorManager.SENSOR_DELAY_UI
+                ) // 'this' is now the listener
+            }
+            isCollectingData = true
+
+            // Stop collecting data after 45 seconds
+            Handler(Looper.getMainLooper()).postDelayed({
+                stopCollectingData()
+            }, 1000)
+        }
+    }
+
+    // Function to stop collecting data
     private fun stopCollectingData() {
         sensorManager.unregisterListener(this, rotationVectorSensor)
         isCollectingData = false
         Log.d(TAG, "Data collection complete")
 
-        // Log the collected data
-        for (orientation in orientationValues) {
-            Log.d(TAG, "Collected Orientation: Z: ${orientation[0]}, X: ${orientation[1]}, Y: ${orientation[2]}")
+        // FOR CSV
+//        val fileNames = listOf(
+//            "CSVBreatheX.csv",
+//            "CSVBreatheY.csv",
+//            "CSVBreatheZ.csv"
+//        )
+//        val listsOfFloats = mutableListOf<MutableList<Float>>()
+//
+//        for (fileName in fileNames) {
+//            val floatList = readCsvFileFromAssets(context = applicationContext, fileName)
+//            listsOfFloats.add(floatList)
+//        }
+//        val azimuthValues = listsOfFloats[0]
+//        val pitchValues = listsOfFloats[1]
+//        val rollValues = listsOfFloats[2]
+
+//        Log.d(TAG, "Collected azimuth values: $azimuthValues")
+        val respiratoryRate = respiratoryRateCalculator(azimuthValues, pitchValues, rollValues)
+        Log.d(TAG, "Calculated respiratory rate: $respiratoryRate")
+    }
+
+    private fun readCsvFileFromAssets(context: Context, fileName: String): MutableList<Float> {
+        val mutableList = mutableListOf<Float>()
+
+        try {
+            val inputStream = context.assets.open(fileName)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            reader.forEachLine { line ->
+                val values = line.split(",")
+                values.forEach { value ->
+                    mutableList.add(value.trim().toFloatOrNull() ?: 0.0f)
+                }
+            }
+            reader.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+
+        return mutableList
     }
 
-    fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Handle accuracy changes if needed
-    }
-
-private fun hasRequiredPermissions(): Boolean {
+    private fun hasRequiredPermissions(): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
                 applicationContext, it
