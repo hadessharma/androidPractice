@@ -40,16 +40,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -67,6 +65,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var rotationVectorSensor: Sensor? = null
 //    private val orientationValues = mutableListOf<FloatArray>()
+
+    private var heartRate by mutableStateOf("N/A")
+    private var respiratoryRate by mutableStateOf("N/A")
 
     private val azimuthValues = mutableListOf<Float>()
     private val pitchValues = mutableListOf<Float>()
@@ -91,8 +92,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
         setContent {
             CameraXGuideTheme {
-                val scope = rememberCoroutineScope()
-                val scaffoldState = rememberBottomSheetScaffoldState()
+
                 val controller = remember {
                     LifecycleCameraController(applicationContext).apply {
                         setEnabledUseCases(
@@ -102,7 +102,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 }
 
                 val viewModel = viewModel<MainViewModel>()
-                val bitmaps by viewModel.bitmaps.collectAsState()
 
 
                 Box(
@@ -147,11 +146,30 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         }
                         // Heart Rate and Respiration Buttons
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Text(
+                                text = "Heart Rate: $heartRate",
+                                modifier = Modifier.padding(vertical = 2.dp),
+                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "Respiratory Rate: $respiratoryRate",
+                                modifier = Modifier.padding(vertical = 2.dp),
+                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                        }
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+
                             Button(
                                 onClick = { recordVideo(controller) },
                                 modifier = Modifier
@@ -160,6 +178,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             ) {
                                 Text("Heart Rate")
                             }
+
                             Button(
                                 onClick = { startOrientationDataCollection() },
                                 modifier = Modifier
@@ -220,6 +239,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             try {
                                 val rate =
                                     heartRateCalculator(Uri.fromFile(outputFile), contentResolver)
+                                heartRate = rate.toString()
                                 // Use the result (rate) here
                                 Log.d("HeartRate", "Calculated heart rate: $rate")
                             } catch (e: Exception) {
@@ -276,9 +296,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         if (!isCollectingData) {
             rotationVectorSensor?.let { sensor ->
                 sensorManager.registerListener(
-                    this,
-                    sensor,
-                    SensorManager.SENSOR_DELAY_UI
+                    this, sensor, SensorManager.SENSOR_DELAY_UI
                 ) // 'this' is now the listener
             }
             isCollectingData = true
@@ -286,7 +304,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             // Stop collecting data after 45 seconds
             Handler(Looper.getMainLooper()).postDelayed({
                 stopCollectingData()
-            }, 1000)
+            }, 45000)
         }
     }
 
@@ -313,7 +331,11 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 //        val rollValues = listsOfFloats[2]
 
 //        Log.d(TAG, "Collected azimuth values: $azimuthValues")
-        val respiratoryRate = respiratoryRateCalculator(azimuthValues, pitchValues, rollValues)
+        respiratoryRate =
+            respiratoryRateCalculator(azimuthValues, pitchValues, rollValues).toString()
+        azimuthValues.clear()
+        pitchValues.clear()
+        rollValues.clear()
         Log.d(TAG, "Calculated respiratory rate: $respiratoryRate")
     }
 
