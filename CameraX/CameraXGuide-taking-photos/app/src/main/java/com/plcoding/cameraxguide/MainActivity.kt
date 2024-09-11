@@ -5,6 +5,9 @@ package com.plcoding.cameraxguide
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -38,8 +41,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -54,11 +59,21 @@ import java.io.File
 class MainActivity : ComponentActivity() {
 
     private var recording: Recording? = null
+    private lateinit var sensorManager: SensorManager
+    private var rotationVectorSensor: Sensor? = null
+    private val orientationValues = mutableListOf<FloatArray>()
+    private val TAG = "OrientationData"
+    private var isCollectingData by mutableStateOf(false)
 
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+
         if (!hasRequiredPermissions()) {
             ActivityCompat.requestPermissions(
                 this, CAMERAX_PERMISSIONS, 0
@@ -75,6 +90,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+
                 val viewModel = viewModel<MainViewModel>()
                 val bitmaps by viewModel.bitmaps.collectAsState()
 
@@ -128,7 +144,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Button(
                                     onClick = {},
-                                    modifier = Modifier,
+                                    modifier = Modifier.width(150.dp),
                                     contentPadding = PaddingValues(8.dp)
                                 ) {
                                     Text("Symptoms")
@@ -152,6 +168,8 @@ class MainActivity : ComponentActivity() {
 
                     }
                 }
+
+                startOrientationDataCollection()
             }
         }
     }
@@ -219,8 +237,63 @@ class MainActivity : ComponentActivity() {
         }, 45000)
     }
 
+    // Starts collecting orientation data
+    private fun startOrientationDataCollection() {
+        if (!isCollectingData) {
+            rotationVectorSensor?.let { sensor ->
+                sensorManager.registerListener(
+                    this, sensor, SensorManager.SENSOR_DELAY_UI
+                )
+            }
+            isCollectingData = true
 
-    private fun hasRequiredPermissions(): Boolean {
+            // Stop collecting data after 45 seconds
+            Handler(Looper.getMainLooper()).postDelayed({
+                stopCollectingData()
+            }, 45000)
+        }
+    }
+
+    // This method is called when sensor data changes
+    fun onSensorChanged(event: SensorEvent?) {
+        event?.let {
+            if (it.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+                val rotationMatrix = FloatArray(9)
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, it.values)
+
+                val orientation = FloatArray(3)
+                SensorManager.getOrientation(rotationMatrix, orientation)
+
+                val azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat() // Z axis
+                val pitch = Math.toDegrees(orientation[1].toDouble()).toFloat()   // X axis
+                val roll = Math.toDegrees(orientation[2].toDouble()).toFloat()    // Y axis
+
+                // Log the data
+                Log.d(TAG, "Orientation: Z: $azimuth, X: $pitch, Y: $roll")
+
+                // Add values to the list
+                orientationValues.add(floatArrayOf(azimuth, pitch, roll))
+            }
+        }
+    }
+
+    // This method is called after 45 seconds to stop data collection
+    private fun stopCollectingData() {
+        sensorManager.unregisterListener(this, rotationVectorSensor)
+        isCollectingData = false
+        Log.d(TAG, "Data collection complete")
+
+        // Log the collected data
+        for (orientation in orientationValues) {
+            Log.d(TAG, "Collected Orientation: Z: ${orientation[0]}, X: ${orientation[1]}, Y: ${orientation[2]}")
+        }
+    }
+
+    fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        // Handle accuracy changes if needed
+    }
+
+private fun hasRequiredPermissions(): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(
                 applicationContext, it
@@ -235,3 +308,4 @@ class MainActivity : ComponentActivity() {
         )
     }
 }
+
