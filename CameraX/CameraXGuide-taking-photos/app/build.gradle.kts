@@ -77,6 +77,11 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-video:$cameraxVersion")
 
+    val nav_version = "2.8.0"
+
+    implementation("androidx.navigation:navigation-compose:$nav_version")
+
+
     implementation("androidx.camera:camera-view:$cameraxVersion")
     implementation("androidx.camera:camera-extensions:$cameraxVersion")
 }
