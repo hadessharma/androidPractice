@@ -23,16 +23,18 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.video.AudioConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,7 +78,8 @@ class MainActivity : ComponentActivity() {
                 val viewModel = viewModel<MainViewModel>()
                 val bitmaps by viewModel.bitmaps.collectAsState()
 
-                BottomSheetScaffold(scaffoldState = scaffoldState,
+                BottomSheetScaffold(
+                    scaffoldState = scaffoldState,
                     sheetPeekHeight = 0.dp,
                     sheetContent = {
                         PhotoBottomSheetContent(
@@ -89,23 +92,64 @@ class MainActivity : ComponentActivity() {
                             .padding(padding)
                     ) {
                         CameraPreview(
-                            controller = controller, modifier = Modifier.fillMaxSize()
+                            controller = controller,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter) // Align at the top center
+                                .padding(16.dp) // Padding around the preview
+                                .size(200.dp) // Set a fixed size for the preview
+
                         )
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .align(Alignment.BottomCenter)
-                                .padding(16.dp), horizontalArrangement = Arrangement.SpaceAround
+                                .padding(16.dp)
                         ) {
-                            IconButton(onClick = {
-                                recordVideo(controller)
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Videocam,
-                                    contentDescription = "Record video"
-                                )
+                            // Symptoms and Upload Signs Buttons
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 5.dp),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                Button(
+                                    onClick = {},
+                                    modifier = Modifier.width(150.dp),
+                                    contentPadding = PaddingValues(8.dp)
+                                ) {
+                                    Text("Upload Signs")
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 40.dp),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                Button(
+                                    onClick = {},
+                                    modifier = Modifier,
+                                    contentPadding = PaddingValues(8.dp)
+                                ) {
+                                    Text("Symptoms")
+                                }
+                            }
+                            // Heart Rate and Respiration Buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                Button(onClick = {
+                                    recordVideo(controller)
+                                }) {
+                                    Text("Heart Rate")
+                                }
+                                Button(onClick = {}) {
+                                    Text("Respiration")
+                                }
                             }
                         }
+
                     }
                 }
             }
