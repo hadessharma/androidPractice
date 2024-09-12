@@ -2,6 +2,7 @@
 
 package com.plcoding.cameraxguide
 
+import SymptomsButtonWithDropdown
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -136,13 +137,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             ) {
                                 Text("Upload Signs")
                             }
-                            Button(
-                                onClick = {},
-                                modifier = Modifier.width(160.dp),
-                                contentPadding = PaddingValues(12.dp)
-                            ) {
-                                Text("Symptoms")
-                            }
+                            SymptomsButtonWithDropdown()
                         }
                         // Heart Rate and Respiration Buttons
                         Row(
