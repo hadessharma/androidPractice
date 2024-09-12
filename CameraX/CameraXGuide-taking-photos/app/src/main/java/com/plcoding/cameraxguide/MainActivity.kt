@@ -143,23 +143,23 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                                 .fillMaxWidth()
                                 .padding(bottom = 50.dp), // Adjusted padding between rows
                             horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
-                        ){
+                        ) {
                             SymptomsButtonWithDropdown()
                         }
                         // Heart Rate and Respiration Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+//                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             Text(
-                                text = "Heart Rate: $heartRate",
-                                modifier = Modifier.padding(vertical = 2.dp),
+                                text = "$heartRate",
+                                modifier = Modifier.padding(top = 2.dp, start = 10.dp),
                                 fontSize = 15.sp,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Respiratory Rate: $respiratoryRate",
-                                modifier = Modifier.padding(vertical = 2.dp),
+                                text = "$respiratoryRate",
+                                modifier = Modifier.padding(top = 2.dp, start = 150.dp),
                                 fontSize = 15.sp,
                                 style = MaterialTheme.typography.titleMedium
                             )
@@ -167,8 +167,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         }
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
 
