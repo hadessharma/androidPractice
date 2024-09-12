@@ -32,13 +32,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -151,24 +156,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     .align(Alignment.BottomCenter) // Align the buttons at the bottom
                     .padding(16.dp)
             ) {
-                // Symptoms and Upload Signs Buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 5.dp),
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Button(
-                        onClick = {
-                            // Navigate to Symptoms screen when Upload Signs button is clicked
-                            navController.navigate("symptoms")
-                        },
-                        modifier = Modifier.width(150.dp),
-                        contentPadding = PaddingValues(8.dp)
-                    ) {
-                        Text("Upload Signs")
-                    }
-                }
+
 
                 // Labels for Heart Rate and Respiratory Rate
                 Row(
@@ -213,6 +201,38 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     ) {
                         Text("Respiration")
                     }
+                }
+                // Symptoms and Upload Signs Buttons
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 5.dp, top = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    IconButton(
+                        onClick = {
+                            // Navigate to Symptoms screen when Upload Signs button is clicked
+                            navController.navigate("symptoms")
+                        },
+                        modifier = Modifier.width(150.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Upload, // Use an appropriate icon
+                                contentDescription = "Upload",
+                                modifier = Modifier.size(24.dp) // Icon size
+                            )
+                            Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
+                            Text(
+                                text = "Upload Signs",
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+
                 }
             }
         }
