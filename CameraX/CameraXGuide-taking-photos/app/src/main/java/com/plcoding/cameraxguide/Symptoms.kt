@@ -1,7 +1,13 @@
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -15,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -24,7 +31,18 @@ import androidx.compose.ui.unit.dp
 fun SymptomsButtonWithDropdown() {
 
     // List of symptoms
-    val symptoms = listOf("Nausea", "Headache", "Diarrhea", "Sore Throat", "Fever", "Muscle Ache", "Loss of Smell or Taste", "Cough", "Shortness of Breath", "Feeling Tired")
+    val symptoms = listOf(
+        "Nausea",
+        "Headache",
+        "Diarrhea",
+        "Sore Throat",
+        "Fever",
+        "Muscle Ache",
+        "Loss of Smell or Taste",
+        "Cough",
+        "Shortness of Breath",
+        "Feeling Tired"
+    )
     var ratings = mutableMapOf<String, Int>()
 
     // State to control the visibility of the drop-down menu
@@ -40,22 +58,26 @@ fun SymptomsButtonWithDropdown() {
     var ratingDialogVisible by remember { mutableStateOf(false) }
 
 
-    Column {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center // Align content to the center
+    ) {
         // Symptoms Button
         Button(
             onClick = { expanded = !expanded }, // Toggle drop-down visibility
             modifier = Modifier
-                .width(150.dp)
-//                .padding(bottom = 16.dp)
+                .width(200.dp)
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(10.dp)
         ) {
             Text("Symptoms")
         }
 
         // Drop-down menu
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = false }
-        ) {
+        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = false }) {
             TextField(
                 modifier = Modifier.menuAnchor(),
                 value = selectedSymptom,
@@ -65,15 +87,11 @@ fun SymptomsButtonWithDropdown() {
             )
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 symptoms.forEachIndexed { index, symptom ->
-                    DropdownMenuItem(
-                        text = { Text(symptom) },
-                        onClick = {
-                            selectedSymptom = symptoms[index]
-                            expanded = false
-                            ratingDialogVisible =
-                                true // Show rating dialog when a symptom is selected
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    DropdownMenuItem(text = { Text(symptom) }, onClick = {
+                        selectedSymptom = symptoms[index]
+                        expanded = false
+                        ratingDialogVisible = true // Show rating dialog when a symptom is selected
+                    }, contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                     )
                 }
             }
@@ -84,8 +102,7 @@ fun SymptomsButtonWithDropdown() {
 
     // Rating Dialog
     if (ratingDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { ratingDialogVisible = false },
+        AlertDialog(onDismissRequest = { ratingDialogVisible = false },
             title = { Text("Rate $selectedSymptom") },
             text = {
                 Column {
@@ -97,8 +114,7 @@ fun SymptomsButtonWithDropdown() {
                                     put(selectedSymptom, rating)
                                 }
                                 ratingDialogVisible = false // Close dialog after rating
-                            },
-                            modifier = Modifier.padding(4.dp)
+                            }, modifier = Modifier.padding(4.dp)
                         ) {
                             Text(text = rating.toString())
                         }
@@ -109,7 +125,6 @@ fun SymptomsButtonWithDropdown() {
                 Button(onClick = { ratingDialogVisible = false }) {
                     Text("Close")
                 }
-            }
-        )
+            })
     }
 }

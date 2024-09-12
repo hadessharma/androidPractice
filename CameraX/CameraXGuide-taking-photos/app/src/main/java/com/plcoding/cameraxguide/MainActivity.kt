@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.plcoding.cameraxguide.ui.theme.CameraXGuideTheme
 import kotlinx.coroutines.launch
 import respiratoryRateCalculator
@@ -93,108 +97,127 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
         setContent {
             CameraXGuideTheme {
+                // Create NavController
+                val navController = rememberNavController()
 
-                val controller = remember {
-                    LifecycleCameraController(applicationContext).apply {
-                        setEnabledUseCases(
-                            CameraController.IMAGE_CAPTURE or CameraController.VIDEO_CAPTURE
-                        )
+
+                NavHost(navController = navController, startDestination = "main") {
+                    // Main Screen
+                    composable("main") {
+                        MainScreen(navController = navController)
+                    }
+                    // Symptoms Screen
+                    composable("symptoms") {
+                        SymptomsButtonWithDropdown()
                     }
                 }
 
-                val viewModel = viewModel<MainViewModel>()
-
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp) // Adjusted padding for the entire box
-                ) {
-                    CameraPreview(
-                        controller = controller,
-                        modifier = Modifier
-                            .align(Alignment.TopCenter) // Align at the top center
-                            .padding(top = 20.dp) // Reduced top padding around the preview
-                            .size(180.dp) // Increased size for better visibility
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 16.dp) // Adjusted bottom padding
-                    ) {
-                        // Symptoms and Upload Signs Buttons
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 70.dp), // Adjusted padding between rows
-                            horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
-                        ) {
-                            Button(
-                                onClick = {},
-                                modifier = Modifier.width(160.dp),
-                                contentPadding = PaddingValues(12.dp) // Increased padding for better touch area
-                            ) {
-                                Text("Upload Signs")
-                            }
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 50.dp), // Adjusted padding between rows
-                            horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
-                        ) {
-                            SymptomsButtonWithDropdown()
-                        }
-                        // Heart Rate and Respiration Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Text(
-                                text = "$heartRate",
-                                modifier = Modifier.padding(top = 2.dp, start = 10.dp),
-                                fontSize = 15.sp,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "$respiratoryRate",
-                                modifier = Modifier.padding(top = 2.dp, start = 150.dp),
-                                fontSize = 15.sp,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-
-                            Button(
-                                onClick = { recordVideo(controller) },
-                                modifier = Modifier
-                                    .weight(1f) // Flexible size
-                                    .padding(end = 8.dp) // Spacing between buttons
-                            ) {
-                                Text("Heart Rate")
-                            }
-
-                            Button(
-                                onClick = { startOrientationDataCollection() },
-                                modifier = Modifier
-                                    .weight(1f) // Flexible size
-                                    .padding(start = 8.dp)
-                            ) {
-                                Text("Respiration")
-                            }
-                        }
-                    }
-                }
 
             }
         }
     }
+
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    @Composable
+    fun MainScreen(navController: NavHostController) {
+        val controller = remember {
+            LifecycleCameraController(applicationContext).apply {
+                setEnabledUseCases(
+                    CameraController.IMAGE_CAPTURE or CameraController.VIDEO_CAPTURE
+                )
+            }
+        }
+
+        // Use Box to layer and position elements properly
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp) // General padding around the box
+        ) {
+            // Camera preview at the top center
+            CameraPreview(
+                controller = controller,
+                modifier = Modifier
+                    .align(Alignment.TopCenter) // Align at the top center
+                    .padding(top = 40.dp) // Padding around the preview
+                    .size(200.dp) // Set a fixed size for the preview
+            )
+
+            // Buttons at the bottom
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter) // Align the buttons at the bottom
+                    .padding(16.dp)
+            ) {
+                // Symptoms and Upload Signs Buttons
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Button(
+                        onClick = {
+                            // Navigate to Symptoms screen when Upload Signs button is clicked
+                            navController.navigate("symptoms")
+                        },
+                        modifier = Modifier.width(150.dp),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        Text("Upload Signs")
+                    }
+                }
+
+                // Labels for Heart Rate and Respiratory Rate
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text(
+                        text = "Heart Rate: $heartRate",
+                        modifier = Modifier.padding(vertical = 2.dp),
+                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Respiratory Rate: $respiratoryRate",
+                        modifier = Modifier.padding(vertical = 2.dp),
+                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                // Heart Rate and Respiration Buttons
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Button(
+                        onClick = { recordVideo(controller) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp) // Spacing between buttons
+                    ) {
+                        Text("Heart Rate")
+                    }
+
+                    Button(
+                        onClick = { startOrientationDataCollection() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp)
+                    ) {
+                        Text("Respiration")
+                    }
+                }
+            }
+        }
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.P)
     @SuppressLint("MissingPermission")
