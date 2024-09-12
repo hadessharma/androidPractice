@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         modifier = Modifier
                             .align(Alignment.TopCenter) // Align at the top center
                             .padding(top = 20.dp) // Reduced top padding around the preview
-                            .size(240.dp) // Increased size for better visibility
+                            .size(180.dp) // Increased size for better visibility
                     )
                     Column(
                         modifier = Modifier
@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 20.dp), // Adjusted padding between rows
+                                .padding(bottom = 70.dp), // Adjusted padding between rows
                             horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
                         ) {
                             Button(
@@ -137,6 +137,13 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             ) {
                                 Text("Upload Signs")
                             }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 50.dp), // Adjusted padding between rows
+                            horizontalArrangement = Arrangement.SpaceEvenly // Even space around buttons
+                        ){
                             SymptomsButtonWithDropdown()
                         }
                         // Heart Rate and Respiration Buttons

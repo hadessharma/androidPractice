@@ -1,6 +1,8 @@
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,16 +18,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@SuppressLint("MutableCollectionMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SymptomsButtonWithDropdown() {
 
     // List of symptoms
-    val symptoms = listOf("Headache", "Nausea", "Dizziness", "Fatigue")
+    val symptoms = listOf("Nausea", "Headache", "Diarrhea", "Sore Throat", "Fever", "Muscle Ache", "Loss of Smell or Taste", "Cough", "Shortness of Breath", "Feeling Tired")
+    var ratings = mutableMapOf<String, Int>()
 
     // State to control the visibility of the drop-down menu
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf(symptoms[0]) }
+    var selectedSymptom by remember { mutableStateOf(symptoms[0]) }
+
+    // State to store the selected rating
+    // rating from 1 - 5
+    var selectedRating by remember { mutableStateOf(0) }
+    var symptomRatings by remember { mutableStateOf(ratings) }
+
+    // State to manage the rating dialog visibility
+    var ratingDialogVisible by remember { mutableStateOf(false) }
 
 
     Column {
@@ -34,7 +46,7 @@ fun SymptomsButtonWithDropdown() {
             onClick = { expanded = !expanded }, // Toggle drop-down visibility
             modifier = Modifier
                 .width(150.dp)
-                .padding(bottom = 16.dp)
+//                .padding(bottom = 16.dp)
         ) {
             Text("Symptoms")
         }
@@ -46,7 +58,7 @@ fun SymptomsButtonWithDropdown() {
         ) {
             TextField(
                 modifier = Modifier.menuAnchor(),
-                value = selectedText,
+                value = selectedSymptom,
                 onValueChange = {},
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -56,13 +68,48 @@ fun SymptomsButtonWithDropdown() {
                     DropdownMenuItem(
                         text = { Text(symptom) },
                         onClick = {
-                            selectedText = symptoms[index]
+                            selectedSymptom = symptoms[index]
                             expanded = false
+                            ratingDialogVisible =
+                                true // Show rating dialog when a symptom is selected
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                     )
                 }
             }
         }
+        // Display selected rating
+        Text(text = "${symptomRatings[selectedSymptom] ?: "N/A"}")
+    }
+
+    // Rating Dialog
+    if (ratingDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { ratingDialogVisible = false },
+            title = { Text("Rate $selectedSymptom") },
+            text = {
+                Column {
+                    (1..5).forEach { rating ->
+                        Button(
+                            onClick = {
+                                selectedRating = rating
+                                symptomRatings = symptomRatings.toMutableMap().apply {
+                                    put(selectedSymptom, rating)
+                                }
+                                ratingDialogVisible = false // Close dialog after rating
+                            },
+                            modifier = Modifier.padding(4.dp)
+                        ) {
+                            Text(text = rating.toString())
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { ratingDialogVisible = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
