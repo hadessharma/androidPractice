@@ -37,6 +37,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,6 +87,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private val TAG = "OrientationData"
     private var isCollectingData by mutableStateOf(false)
 
+    private var isCameraPreviewEnabled by mutableStateOf(true)
+    private fun toggleCameraPreview() {
+        isCameraPreviewEnabled = !isCameraPreviewEnabled
+    }
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,7 +113,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         SymptomsButtonWithDropdown(
                             application = applicationContext,
                             heartRate = heartRate,
-                            respiratoryRate = respiratoryRate
+                            respiratoryRate = respiratoryRate,
+                            navController = navController
                         )
                     }
                 }
@@ -147,13 +154,29 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 .padding(10.dp) // General padding around the box
         ) {
             // Camera preview at the top center
-            CameraPreview(
-                controller = controller,
+            if (isCameraPreviewEnabled) {
+                CameraPreview(
+                    controller = controller,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter) // Align at the top center
+                        .padding(top = 40.dp) // Padding around the preview
+                        .size(150.dp) // Set a fixed size for the preview
+                )
+            }
+
+            IconButton(
+                onClick = { toggleCameraPreview() },
                 modifier = Modifier
-                    .align(Alignment.TopCenter) // Align at the top center
-                    .padding(top = 40.dp) // Padding around the preview
-                    .size(200.dp) // Set a fixed size for the preview
-            )
+                    .align(Alignment.TopCenter) // Align below the camera preview
+                    .padding(top = 250.dp) // Adjust padding to position the button below the preview
+                    .size(100.dp) // Size of the button
+            ) {
+                Icon(
+                    imageVector = if (isCameraPreviewEnabled) Icons.Filled.Camera else Icons.Filled.CameraAlt,
+                    contentDescription = if (isCameraPreviewEnabled) "Turn Off Camera" else "Turn On Camera",
+                    modifier = Modifier.size(50.dp) // Icon size
+                )
+            }
 
             // Buttons at the bottom
             Column(
@@ -191,7 +214,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Button(
-                        onClick = { recordVideo(controller) },
+                        onClick = {
+                            recordVideo(controller)
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 8.dp) // Spacing between buttons
@@ -233,8 +258,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                             )
                             Spacer(modifier = Modifier.width(8.dp)) // Space between icon and text
                             Text(
-                                text = "Upload Signs",
-                                fontSize = 16.sp
+                                text = "Upload Signs", fontSize = 16.sp
                             )
                         }
                     }
@@ -283,7 +307,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         Toast.makeText(
                             applicationContext, "Video capture succeeded", Toast.LENGTH_LONG
                         ).show()
-
+                        toggleCameraPreview()
                         // Call heartRateCalculator after video capture succeeds
                         lifecycleScope.launch {
                             try {
@@ -301,7 +325,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             }
         }
 
-        // Stop the recording after 10 seconds (adjust as needed)
+        // Stop the recording after 45 seconds (adjust as needed)
         Handler(Looper.getMainLooper()).postDelayed({
             recording?.stop()
             recording = null

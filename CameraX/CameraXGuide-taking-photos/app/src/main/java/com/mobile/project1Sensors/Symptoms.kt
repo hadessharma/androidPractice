@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -35,7 +36,8 @@ import kotlinx.coroutines.launch
 fun SymptomsButtonWithDropdown(
     application: Context,
     heartRate: String,
-    respiratoryRate: String
+    respiratoryRate: String,
+    navController: NavHostController
 ) {
     val db = UserDatabase.getDatabase(application)
     // List of symptoms
@@ -141,9 +143,9 @@ fun SymptomsButtonWithDropdown(
                 }
             },
             confirmButton = {
-                Button(onClick = { ratingDialogVisible = false }) {
-                    Text("Close")
-                }
+//                Button(onClick = { ratingDialogVisible = false }) {
+//                    Text("Close")
+//                }
             })
     }
 
@@ -173,6 +175,7 @@ fun SymptomsButtonWithDropdown(
                         db.userDao().insert(userVal)
                     }
                     submitDialogVisible = false // Close dialog after submission
+                    navController.popBackStack()
                 }) {
                     Text("Submit")
                 }
