@@ -254,7 +254,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
 
         controller.cameraControl?.enableTorch(true)
-        val outputFile = File(filesDir, "my-recording.mp4")
+        val outputFile = File(filesDir, "hearRate.mp4")
 
         recording = controller.startRecording(
             FileOutputOptions.Builder(outputFile).build(),
