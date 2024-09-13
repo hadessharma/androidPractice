@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -11,8 +11,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.plcoding.cameraxguide"
-        minSdk = 24
+        applicationId = "com.plcoding.project1Sensors"
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -33,11 +33,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17 // Set to Java 17
+        targetCompatibility = JavaVersion.VERSION_17 // Set to Java 17
     }
+
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17" // Set Kotlin JVM target to 17 to match Java
     }
     buildFeatures {
         compose = true
