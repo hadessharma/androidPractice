@@ -158,8 +158,8 @@ fun SymptomsButtonWithDropdown(
             confirmButton = {
                 Button(onClick = {
                     val userVal = User(
-                        heartRate = heartRate, // Example heart rate value
-                        respiratoryRate = respiratoryRate, // Example respiratory rate value
+                        heartRate = heartRate,
+                        respiratoryRate = respiratoryRate,
                         nausea = symptomRatings["Nausea"] ?: 0,
                         headache = symptomRatings["Headache"] ?: 0,
                         diarrhea = symptomRatings["Diarrhea"] ?: 0,
